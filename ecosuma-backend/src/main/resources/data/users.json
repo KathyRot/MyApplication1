@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "id": 1, "username": "maria", "password": "maria123",
+      "fullName": "María López", "email": "maria@correo.com", "role": "CIUDADANO",
+      "colonia": "Centro", "puntosDisponibles": 350, "puntosAcumulados": 520,
+      "kgReciclados": 28.0, "entregas": 12, "beneficiosUsados": 2
+    },
+    {
+      "id": 2, "username": "jorge", "password": "jorge123",
+      "fullName": "Jorge Hernández", "email": "jorge@correo.com", "role": "CIUDADANO",
+      "colonia": "Jaltepec", "puntosDisponibles": 90, "puntosAcumulados": 90,
+      "kgReciclados": 6.5, "entregas": 3, "beneficiosUsados": 0
+    },
+    {
+      "id": 3, "username": "admin", "password": "admin123",
+      "fullName": "Laura Méndez", "email": "admin@ecosuma.mx", "role": "ADMINISTRADOR"
+    },
+    {
+      "id": 4, "username": "acopio", "password": "acopio123",
+      "fullName": "Raúl Castillo", "email": "acopio01@ecosuma.mx", "role": "ACOPIO",
+      "centro": "Centro de Acopio 01"
+    }
+  ]
+}
