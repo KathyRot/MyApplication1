@@ -3,6 +3,7 @@ ktor:
     port: 8080
   application:
     modules:
+      - com.ecosuma.MonitoringKt.configureMonitoring
       - com.ecosuma.HttpKt.configureHttp
       - com.ecosuma.SerializationKt.configureSerialization
       - com.ecosuma.StatusPagesKt.configureStatusPages
