@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -64,8 +65,12 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.engine.defaults)
             implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.client.logging)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
+
+            // Navegación entre pantallas (login -> vista de cada rol)
+            implementation(libs.navigation.compose)
         }
 
         commonTest.dependencies {
