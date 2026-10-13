@@ -13,3 +13,11 @@ build/
 # Xcode
 iosApp/iosApp.xcodeproj/xcuserdata/
 iosApp/iosApp.xcworkspace/xcuserdata/
+
+**/build/
+**/.gradle/
+**/.kotlin/
+**/.idea/
+**/local.properties
+
+
