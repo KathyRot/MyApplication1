@@ -1,7 +1,7 @@
 {
   "users": [
     {
-      "id": 1, "username": "maria", "password": "maria123",
+      "id": 1, "username": "maria", "password": "123",
       "fullName": "María López", "email": "maria@correo.com", "role": "CIUDADANO",
       "colonia": "Centro", "puntosDisponibles": 350, "puntosAcumulados": 520,
       "kgReciclados": 28.0, "entregas": 12, "beneficiosUsados": 2

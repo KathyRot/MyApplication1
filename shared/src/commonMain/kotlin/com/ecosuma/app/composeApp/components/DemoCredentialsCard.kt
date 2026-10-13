@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun DemoCredentialsCard() {
     val demo = listOf(
-        Triple("maria", "maria123", "Ciudadano"),
+        Triple("maria", "123", "Ciudadano"),
         Triple("admin", "admin123", "Administrador"),
         Triple("acopio", "acopio123", "Acopio")
     )
