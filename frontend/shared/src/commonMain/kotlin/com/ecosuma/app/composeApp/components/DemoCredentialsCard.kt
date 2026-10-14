@@ -14,24 +14,49 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-/** Usuarios de prueba: son los mismos que están en users.json del backend. */
+/**
+ * Muestra las credenciales de prueba de EcoSuma.
+ * Estas credenciales son únicamente para demostración.
+ */
 @Composable
 fun DemoCredentialsCard() {
-    val demo = listOf(
-        Triple("maria", "123", "Ciudadano"),
+
+    val demo: kotlin.collections.List<Triple<String, String, String>> = listOf(
+        Triple("maria", "maria123", "Ciudadano"),
         Triple("admin", "admin123", "Administrador"),
         Triple("acopio", "acopio123", "Acopio")
     )
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Usuarios de prueba", fontWeight = FontWeight.SemiBold)
-            demo.forEach { (user, pass, rol) ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("$user / $pass", style = MaterialTheme.typography.bodyMedium)
-                    Text(rol, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Usuarios de prueba",
+                fontWeight = FontWeight.SemiBold
+            )
+
+            demo.forEach { (username, password, role) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "$username / $password",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    Text(
+                        text = role,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
