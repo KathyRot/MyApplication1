@@ -5,6 +5,7 @@ import com.ecosuma.models.LoginRequest
 import com.ecosuma.models.LoginResponse
 import com.ecosuma.models.toDto
 import com.ecosuma.routes.materialRoutes
+import com.ecosuma.routes.centroAcopioRoutes
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.request.receive
@@ -23,6 +24,8 @@ fun Application.configureRouting() {
 
         //Modulo de materiales reciclables
         materialRoutes()
+        // Modulo de centros de acopio
+        centroAcopioRoutes()
         // Para comprobar en el navegador que el servidor está encendido
         get("/") {
             call.respondText("EcoSuma API activa")
