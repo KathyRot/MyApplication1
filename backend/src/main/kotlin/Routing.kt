@@ -4,6 +4,7 @@ import com.ecosuma.data.UserRepository
 import com.ecosuma.models.LoginRequest
 import com.ecosuma.models.LoginResponse
 import com.ecosuma.models.toDto
+import com.ecosuma.routes.materialRoutes
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.request.receive
@@ -19,6 +20,9 @@ fun Application.configureRouting() {
     val userRepository = UserRepository()
 
     routing {
+
+        //Modulo de materiales reciclables
+        materialRoutes()
         // Para comprobar en el navegador que el servidor está encendido
         get("/") {
             call.respondText("EcoSuma API activa")
