@@ -104,4 +104,17 @@ class RegistroReciclajeRepository {
 
         return registroRechazado
     }
+
+    // Calcular EcoPuntos acumulados de un ciudadano
+    fun obtenerPuntosPorUsuario(usuarioId: Int): Long {
+
+        return registros
+            .filter {
+                it.usuarioId == usuarioId &&
+                        it.estado == "CONFIRMADO"
+            }
+            .sumOf {
+                it.puntosObtenidos.toLong()
+            }
+    }
 }

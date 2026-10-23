@@ -15,6 +15,7 @@ import io.ktor.server.routing.post
 import java.time.LocalDateTime
 import com.ecosuma.models.ConfirmarRegistroRequest
 import io.ktor.server.routing.put
+import com.ecosuma.models.PuntosUsuarioResponse
 
 fun Route.registroReciclajeRoutes() {
 
@@ -245,6 +246,101 @@ fun Route.registroReciclajeRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 registroRechazado
+            )
+        }
+
+        // Obtener historial de reciclaje de un ciudadano
+        get("/usuario/{usuarioId}") {
+
+            // Obtener el ID del ciudadano
+            val usuarioId = call.parameters["usuarioId"]?.toIntOrNull()
+
+            // Validar el identificador
+            if (usuarioId == null || usuarioId <= 0) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "ID de usuario inválido")
+                )
+                return@get
+            }
+
+            // Consultar los registros del ciudadano
+            val historial = repository.obtenerPorUsuario(usuarioId)
+
+            // Devolver el historial
+            call.respond(
+                HttpStatusCode.OK,
+                historial
+            )
+        }
+
+        // Consultar EcoPuntos acumulados de un ciudadano
+        get("/usuario/{usuarioId}/puntos") {
+
+            // Obtener el ID del ciudadano
+            val usuarioId =
+                call.parameters["usuarioId"]?.toIntOrNull()
+
+            // Validar el identificador
+            if (usuarioId == null || usuarioId <= 0) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "ID de usuario inválido")
+                )
+                return@get
+            }
+
+            // Calcular los EcoPuntos acumulados
+            val puntosAcumulados =
+                repository.obtenerPuntosPorUsuario(usuarioId)
+
+            // Crear la respuesta utilizando el modelo serializable
+            val respuesta = PuntosUsuarioResponse(
+                usuarioId = usuarioId,
+                puntosAcumulados = puntosAcumulados
+            )
+
+            // Devolver los EcoPuntos del ciudadano
+            call.respond(
+                HttpStatusCode.OK,
+                respuesta
+            )
+        }
+
+        // Obtener historial de reciclaje por centro de acopio
+        get("/centro/{centroAcopioId}") {
+
+            // Obtener el ID del centro de acopio
+            val centroAcopioId =
+                call.parameters["centroAcopioId"]?.toIntOrNull()
+
+            // Validar el identificador
+            if (centroAcopioId == null || centroAcopioId <= 0) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "ID de centro de acopio inválido")
+                )
+                return@get
+            }
+
+            // Verificar que exista el centro de acopio
+            val centro = centroRepository.buscarPorId(centroAcopioId)
+
+            if (centro == null) {
+                call.respond(
+                    HttpStatusCode.NotFound,
+                    mapOf("error" to "Centro de acopio no encontrado")
+                )
+                return@get
+            }
+
+            // Consultar los registros del centro
+            val historial = repository.obtenerPorCentro(centroAcopioId)
+
+            // Devolver el historial
+            call.respond(
+                HttpStatusCode.OK,
+                historial
             )
         }
 
