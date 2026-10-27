@@ -1,11 +1,14 @@
 package com.ecosuma.routes
 
 import com.ecosuma.data.CentroAcopioRepository
+import com.ecosuma.models.CentroCercanoResponse
+import com.ecosuma.utils.GeoUtils
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
+import kotlin.math.round
 
 fun Route.centroAcopioRoutes() {
 
@@ -18,6 +21,59 @@ fun Route.centroAcopioRoutes() {
             call.respond(
                 HttpStatusCode.OK,
                 repository.obtenerTodos()
+            )
+        }
+
+        // Consultar centros de acopio cercanos
+        get("/cercanos") {
+
+            // Recibir coordenadas del ciudadano
+            val latitud = call.request.queryParameters["latitud"]?.toDoubleOrNull()
+            val longitud = call.request.queryParameters["longitud"]?.toDoubleOrNull()
+
+            // Validar que las coordenadas sean correctas
+            if (
+                latitud == null ||
+                longitud == null ||
+                !latitud.isFinite() ||
+                !longitud.isFinite() ||
+                latitud !in -90.0..90.0 ||
+                longitud !in -180.0..180.0
+            ) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to "Debes proporcionar coordenadas válidas")
+                )
+                return@get
+            }
+
+            // Obtener centros activos y calcular distancias
+            val centrosCercanos = repository.obtenerTodos().map { centro ->
+
+                val distancia = GeoUtils.calcularDistancia(
+                    latitud,
+                    longitud,
+                    centro.latitud,
+                    centro.longitud
+                )
+
+                CentroCercanoResponse(
+                    id = centro.id,
+                    nombre = centro.nombre,
+                    direccion = centro.direccion,
+                    latitud = centro.latitud,
+                    longitud = centro.longitud,
+                    horario = centro.horario,
+                    telefono = centro.telefono,
+                    distanciaKm = round(distancia * 100.0) / 100.0
+                )
+
+            }.sortedBy { it.distanciaKm }
+
+            // Devolver centros ordenados por cercanía
+            call.respond(
+                HttpStatusCode.OK,
+                centrosCercanos
             )
         }
 
