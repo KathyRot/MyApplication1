@@ -26,6 +26,9 @@ dependencies {
     implementation(ktorLibs.server.statusPages)
     implementation(libs.logback.classic)
 
+    implementation("org.postgresql:postgresql:42.7.8")
+    implementation("com.zaxxer:HikariCP:6.3.0")
+
     testImplementation(kotlin("test"))
     testImplementation(ktorLibs.server.testHost)
 }

@@ -1,9 +1,15 @@
 package com.ecosuma
 
 import com.ecosuma.data.UserRepository
+import com.ecosuma.database.DatabaseFactory
 import com.ecosuma.models.LoginRequest
 import com.ecosuma.models.LoginResponse
 import com.ecosuma.models.toDto
+
+import com.ecosuma.routes.materialRoutes
+import com.ecosuma.routes.centroAcopioRoutes
+import com.ecosuma.routes.registroReciclajeRoutes
+
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.request.receive
@@ -15,41 +21,80 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 
 fun Application.configureRouting() {
-    // Lee users.json una sola vez, al arrancar el servidor
+
+    // Activar PostgreSQL solo cuando esté configurado
+    val postgresEnabled =
+        System.getenv("ECOSUMA_DB_ENABLED") == "true"
+
+    if (postgresEnabled) {
+        DatabaseFactory.init()
+
+        if (DatabaseFactory.testConnection()) {
+            println("EcoSuma: PostgreSQL conectado correctamente")
+        } else {
+            throw IllegalStateException(
+                "EcoSuma: no se pudo comprobar la conexión con PostgreSQL"
+            )
+        }
+    }
+
+    // Leer los usuarios desde users.json
     val userRepository = UserRepository()
 
+
     routing {
-        // Para comprobar en el navegador que el servidor está encendido
+
+        // Módulo de materiales reciclables
+        materialRoutes()
+
+        // Módulo de centros de acopio y geolocalización
+        centroAcopioRoutes()
+
+        // Módulo de registros de reciclaje
+        registroReciclajeRoutes()
+
+        // Comprobar que el servidor esté funcionando
         get("/") {
             call.respondText("EcoSuma API activa")
         }
 
+        // Autenticación de usuarios
         route("/api/auth") {
-            // POST /api/auth/login   cuerpo: { "username": "...", "password": "..." }
+
             post("/login") {
-                // ContentNegotiation convierte el JSON recibido en LoginRequest
+
                 val request = call.receive<LoginRequest>()
 
-                // 1. Campos vacíos -> 400
+                // Validar campos vacíos
                 if (request.username.isBlank() || request.password.isBlank()) {
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        LoginResponse(success = false, message = "Escribe tu usuario y contraseña")
+                        LoginResponse(
+                            success = false,
+                            message = "Escribe tu usuario y contraseña"
+                        )
                     )
                     return@post
                 }
 
-                // 2. Buscar en users.json
-                val user = userRepository.authenticate(request.username, request.password)
+                // Buscar usuario
+                val user = userRepository.authenticate(
+                    request.username,
+                    request.password
+                )
 
                 if (user == null) {
-                    // 3. No coincide -> 401
+
                     call.respond(
                         HttpStatusCode.Unauthorized,
-                        LoginResponse(success = false, message = "Usuario o contraseña incorrectos")
+                        LoginResponse(
+                            success = false,
+                            message = "Usuario o contraseña incorrectos"
+                        )
                     )
+
                 } else {
-                    // 4. Correcto -> 200 con los datos del usuario (sin contraseña) y su rol
+
                     call.respond(
                         HttpStatusCode.OK,
                         LoginResponse(
