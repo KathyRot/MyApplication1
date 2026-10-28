@@ -1,6 +1,7 @@
 package com.ecosuma
 
 import com.ecosuma.data.UserRepository
+import com.ecosuma.database.DatabaseFactory
 import com.ecosuma.models.LoginRequest
 import com.ecosuma.models.LoginResponse
 import com.ecosuma.models.toDto
@@ -21,8 +22,25 @@ import io.ktor.server.routing.routing
 
 fun Application.configureRouting() {
 
+    // Activar PostgreSQL solo cuando esté configurado
+    val postgresEnabled =
+        System.getenv("ECOSUMA_DB_ENABLED") == "true"
+
+    if (postgresEnabled) {
+        DatabaseFactory.init()
+
+        if (DatabaseFactory.testConnection()) {
+            println("EcoSuma: PostgreSQL conectado correctamente")
+        } else {
+            throw IllegalStateException(
+                "EcoSuma: no se pudo comprobar la conexión con PostgreSQL"
+            )
+        }
+    }
+
     // Leer los usuarios desde users.json
     val userRepository = UserRepository()
+
 
     routing {
 
