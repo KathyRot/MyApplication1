@@ -1,50 +1,91 @@
 package com.ecosuma.data
 
+import com.ecosuma.database.DatabaseFactory
 import com.ecosuma.models.Material
 
 class MaterialRepository {
 
-    // Materiales de prueba para EcoSuma
-    private val materiales = listOf(
-        Material(
-            id = 1,
-            nombre = "PET",
-            categoria = "Plástico",
-            puntosPorKg = 10
-        ),
-        Material(
-            id = 2,
-            nombre = "Cartón",
-            categoria = "Papel y cartón",
-            puntosPorKg = 5
-        ),
-        Material(
-            id = 3,
-            nombre = "Aluminio",
-            categoria = "Metal",
-            puntosPorKg = 20
-        ),
-        Material(
-            id = 4,
-            nombre = "Vidrio",
-            categoria = "Vidrio",
-            puntosPorKg = 8
-        ),
-        Material(
-            id = 5,
-            nombre = "Papel",
-            categoria = "Papel y cartón",
-            puntosPorKg = 5
-        )
-    )
-
-    // Devuelve los materiales disponibles
+    // Consultar materiales activos desde PostgreSQL
     fun obtenerTodos(): List<Material> {
-        return materiales.filter { it.activo }
+
+        val materiales = mutableListOf<Material>()
+
+        val sql = """
+            SELECT
+                id_material,
+                nombre,
+                puntos_por_unidad,
+                activo
+            FROM materiales
+            WHERE activo = true
+            ORDER BY id_material
+        """.trimIndent()
+
+        DatabaseFactory.getConnection().use { connection ->
+
+            connection.prepareStatement(sql).use { statement ->
+
+                statement.executeQuery().use { resultado ->
+
+                    while (resultado.next()) {
+
+                        materiales.add(
+                            Material(
+                                id = resultado.getInt("id_material"),
+                                nombre = resultado.getString("nombre"),
+                                categoria = "Sin categoría",
+                                puntosPorKg = resultado
+                                    .getBigDecimal("puntos_por_unidad")
+                                    .toInt(),
+                                activo = resultado.getBoolean("activo")
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        return materiales
     }
 
-    // Busca un material mediante su ID
+    // Buscar un material activo por ID
     fun buscarPorId(id: Int): Material? {
-        return materiales.find { it.id == id && it.activo }
+
+        val sql = """
+            SELECT
+                id_material,
+                nombre,
+                puntos_por_unidad,
+                activo
+            FROM materiales
+            WHERE id_material = ?
+              AND activo = true
+        """.trimIndent()
+
+        DatabaseFactory.getConnection().use { connection ->
+
+            connection.prepareStatement(sql).use { statement ->
+
+                statement.setInt(1, id)
+
+                statement.executeQuery().use { resultado ->
+
+                    if (resultado.next()) {
+
+                        return Material(
+                            id = resultado.getInt("id_material"),
+                            nombre = resultado.getString("nombre"),
+                            categoria = "Sin categoría",
+                            puntosPorKg = resultado
+                                .getBigDecimal("puntos_por_unidad")
+                                .toInt(),
+                            activo = resultado.getBoolean("activo")
+                        )
+                    }
+                }
+            }
+        }
+
+        return null
     }
 }

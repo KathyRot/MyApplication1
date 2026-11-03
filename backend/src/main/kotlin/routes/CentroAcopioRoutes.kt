@@ -16,7 +16,7 @@ fun Route.centroAcopioRoutes() {
 
     route("/api/centros-acopio") {
 
-        // Consultar todos los centros de acopio
+        // Consultar todos los centros de acopio activos
         get {
             call.respond(
                 HttpStatusCode.OK,
@@ -47,22 +47,34 @@ fun Route.centroAcopioRoutes() {
                 return@get
             }
 
-            // Obtener centros activos y calcular distancias
-            val centrosCercanos = repository.obtenerTodos().map { centro ->
+            // Obtener centros activos
+            val centros = repository.obtenerTodos()
 
+            // Excluir centros que todavía no tienen coordenadas
+            val centrosCercanos = centros.mapNotNull { centro ->
+
+                val latCentro = centro.latitud
+                val lonCentro = centro.longitud
+
+                // Si falta alguna coordenada, no incluir este centro
+                if (latCentro == null || lonCentro == null) {
+                    return@mapNotNull null
+                }
+
+                // Calcular distancia entre el ciudadano y el centro
                 val distancia = GeoUtils.calcularDistancia(
                     latitud,
                     longitud,
-                    centro.latitud,
-                    centro.longitud
+                    latCentro,
+                    lonCentro
                 )
 
                 CentroCercanoResponse(
                     id = centro.id,
                     nombre = centro.nombre,
                     direccion = centro.direccion,
-                    latitud = centro.latitud,
-                    longitud = centro.longitud,
+                    latitud = latCentro,
+                    longitud = lonCentro,
                     horario = centro.horario,
                     telefono = centro.telefono,
                     distanciaKm = round(distancia * 100.0) / 100.0

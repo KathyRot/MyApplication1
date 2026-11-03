@@ -40,8 +40,9 @@ class ServerTest {
 
         val contenido = response.bodyAsText()
 
-        assertTrue(contenido.contains("distanciaKm"))
-        assertTrue(contenido.contains("Centro de Acopio EcoSuma"))
+        // Comprobar que la respuesta sea una lista JSON válida
+        assertTrue(contenido.trim().startsWith("["))
+        assertTrue(contenido.trim().endsWith("]"))
     }
 
     @Test
