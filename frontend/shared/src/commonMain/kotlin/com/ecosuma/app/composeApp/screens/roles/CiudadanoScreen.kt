@@ -34,6 +34,7 @@ import com.ecosuma.app.composeApp.components.SectionTitle
 import com.ecosuma.app.composeApp.components.StatCard
 import com.ecosuma.app.composeApp.theme.Points
 import com.ecosuma.app.composeApp.theme.RoleColors
+import com.ecosuma.app.data.model.CentroAcopioDto
 import com.ecosuma.app.data.model.MaterialDto
 import com.ecosuma.app.data.sample.SampleData
 import com.ecosuma.app.di.AppContainer
@@ -60,6 +61,7 @@ fun CiudadanoScreen(
         mutableIntStateOf(0)
     }
 
+    // Estado de materiales
     var materiales by remember {
         mutableStateOf<List<MaterialDto>>(emptyList())
     }
@@ -72,7 +74,20 @@ fun CiudadanoScreen(
         mutableStateOf<String?>(null)
     }
 
-    // Consultar materiales al abrir la pestaña correspondiente
+    // Estado de centros de acopio
+    var centros by remember {
+        mutableStateOf<List<CentroAcopioDto>>(emptyList())
+    }
+
+    var cargandoCentros by remember {
+        mutableStateOf(false)
+    }
+
+    var errorCentros by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    // Consultar materiales al abrir su pestaña
     LaunchedEffect(selected) {
         if (selected == 1) {
             cargandoMateriales = true
@@ -93,6 +108,27 @@ fun CiudadanoScreen(
         }
     }
 
+    // Consultar centros al abrir su pestaña
+    LaunchedEffect(selected) {
+        if (selected == 2) {
+            cargandoCentros = true
+            errorCentros = null
+
+            try {
+                centros = AppContainer.centroAcopioRepository
+                    .obtenerCentros()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                errorCentros =
+                    "No se pudieron cargar los centros de acopio. " +
+                            "Verifica la conexión con el servidor."
+            } finally {
+                cargandoCentros = false
+            }
+        }
+    }
+
     RoleScaffold(
         "EcoSuma",
         user.fullName,
@@ -105,6 +141,7 @@ fun CiudadanoScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+
             PrimaryTabRow(
                 selectedTabIndex = selected
             ) {
@@ -123,8 +160,11 @@ fun CiudadanoScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 when (selected) {
+
+                    // INICIO
                     0 -> inicio(user)
 
+                    // MATERIALES
                     1 -> {
                         when {
                             cargandoMateriales -> {
@@ -144,9 +184,7 @@ fun CiudadanoScreen(
 
                             materiales.isEmpty() -> {
                                 item {
-                                    Text(
-                                        "No hay materiales disponibles."
-                                    )
+                                    Text("No hay materiales disponibles.")
                                 }
                             }
 
@@ -165,19 +203,48 @@ fun CiudadanoScreen(
                         }
                     }
 
+                    // CENTROS DE ACOPIO
                     2 -> {
-                        items(SampleData.centros) {
-                            InfoCard(
-                                it.nombre,
-                                listOf(
-                                    it.direccion,
-                                    it.horario,
-                                    "Recibe: ${it.materiales}"
-                                )
-                            )
+                        when {
+                            cargandoCentros -> {
+                                item {
+                                    Text("Cargando centros de acopio...")
+                                }
+                            }
+
+                            errorCentros != null -> {
+                                item {
+                                    Text(
+                                        text = errorCentros ?: "",
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+
+                            centros.isEmpty() -> {
+                                item {
+                                    Text(
+                                        "No hay centros de acopio disponibles."
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                items(centros) { centro ->
+                                    InfoCard(
+                                        title = centro.nombre,
+                                        lines = listOf(
+                                            "Dirección: ${centro.direccion}",
+                                            "Horario: ${centro.horario}",
+                                            "Teléfono: ${centro.telefono}"
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
 
+                    // BENEFICIOS
                     else -> {
                         item {
                             Text(
@@ -187,21 +254,21 @@ fun CiudadanoScreen(
                             )
                         }
 
-                        items(SampleData.beneficios) {
+                        items(SampleData.beneficios) { beneficio ->
                             val alcanza =
-                                user.puntosDisponibles >= it.costo
+                                user.puntosDisponibles >= beneficio.costo
 
                             InfoCard(
-                                title = it.nombre,
+                                title = beneficio.nombre,
                                 lines = listOf(
-                                    "Disponibles: ${it.disponibles}"
+                                    "Disponibles: ${beneficio.disponibles}"
                                 ),
                                 highlight =
-                                    "${it.costo} puntos" +
+                                    "${beneficio.costo} puntos" +
                                             if (alcanza) {
                                                 ""
                                             } else {
-                                                "  (te faltan ${it.costo - user.puntosDisponibles})"
+                                                "  (te faltan ${beneficio.costo - user.puntosDisponibles})"
                                             },
                                 highlightColor =
                                     if (alcanza) {
