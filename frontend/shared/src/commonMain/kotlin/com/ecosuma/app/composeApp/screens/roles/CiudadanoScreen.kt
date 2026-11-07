@@ -11,8 +11,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -22,11 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ecosuma.app.UbicacionBridge
 import com.ecosuma.app.composeApp.components.GoalCard
 import com.ecosuma.app.composeApp.components.InfoCard
 import com.ecosuma.app.composeApp.components.RoleScaffold
@@ -35,11 +39,13 @@ import com.ecosuma.app.composeApp.components.StatCard
 import com.ecosuma.app.composeApp.theme.Points
 import com.ecosuma.app.composeApp.theme.RoleColors
 import com.ecosuma.app.data.model.CentroAcopioDto
+import com.ecosuma.app.data.model.CentroCercanoDto
 import com.ecosuma.app.data.model.MaterialDto
 import com.ecosuma.app.data.sample.SampleData
 import com.ecosuma.app.di.AppContainer
 import com.ecosuma.app.domain.model.User
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 private val tabs = listOf(
     "Inicio",
@@ -49,7 +55,7 @@ private val tabs = listOf(
 )
 
 /**
- * Pantalla principal del ciudadano.
+ * Pantalla principal del ciudadano de EcoSuma.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,11 +63,13 @@ fun CiudadanoScreen(
     user: User,
     onLogout: () -> Unit
 ) {
+
     var selected by rememberSaveable {
         mutableIntStateOf(0)
     }
 
-    // Estado de materiales
+    // MATERIALES
+
     var materiales by remember {
         mutableStateOf<List<MaterialDto>>(emptyList())
     }
@@ -74,7 +82,8 @@ fun CiudadanoScreen(
         mutableStateOf<String?>(null)
     }
 
-    // Estado de centros de acopio
+    // CENTROS DE ACOPIO
+
     var centros by remember {
         mutableStateOf<List<CentroAcopioDto>>(emptyList())
     }
@@ -87,44 +96,119 @@ fun CiudadanoScreen(
         mutableStateOf<String?>(null)
     }
 
-    // Consultar materiales al abrir su pestaña
+    // GEOLOCALIZACIÓN
+
+    var centrosCercanos by remember {
+        mutableStateOf<List<CentroCercanoDto>>(emptyList())
+    }
+
+    var buscandoCercanos by remember {
+        mutableStateOf(false)
+    }
+
+    var errorUbicacion by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var mostrarCercanos by remember {
+        mutableStateOf(false)
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    // CARGAR MATERIALES
+
     LaunchedEffect(selected) {
         if (selected == 1) {
+
             cargandoMateriales = true
             errorMateriales = null
 
             try {
                 materiales = AppContainer.materialRepository
                     .obtenerMateriales()
+
             } catch (e: CancellationException) {
                 throw e
+
             } catch (e: Exception) {
                 errorMateriales =
                     "No se pudieron cargar los materiales. " +
                             "Verifica la conexión con el servidor."
+
             } finally {
                 cargandoMateriales = false
             }
         }
     }
 
-    // Consultar centros al abrir su pestaña
+    // CARGAR CENTROS
+
     LaunchedEffect(selected) {
         if (selected == 2) {
+
             cargandoCentros = true
             errorCentros = null
 
             try {
                 centros = AppContainer.centroAcopioRepository
                     .obtenerCentros()
+
             } catch (e: CancellationException) {
                 throw e
+
             } catch (e: Exception) {
                 errorCentros =
                     "No se pudieron cargar los centros de acopio. " +
                             "Verifica la conexión con el servidor."
+
             } finally {
                 cargandoCentros = false
+            }
+        }
+    }
+
+    // BUSCAR CENTROS CERCANOS
+
+    fun buscarCentrosCercanos() {
+
+        if (buscandoCercanos) return
+
+        errorUbicacion = null
+        buscandoCercanos = true
+
+        if (UbicacionBridge.solicitarUbicacion == null) {
+            errorUbicacion =
+                "La ubicación no está disponible en este dispositivo."
+            buscandoCercanos = false
+            return
+        }
+
+        UbicacionBridge.obtenerUbicacion { latitud, longitud ->
+
+            coroutineScope.launch {
+
+                try {
+                    centrosCercanos =
+                        AppContainer.centroAcopioRepository
+                            .obtenerCentrosCercanos(
+                                latitud = latitud,
+                                longitud = longitud
+                            )
+
+                    mostrarCercanos = true
+
+                } catch (e: CancellationException) {
+                    throw e
+
+                } catch (e: Exception) {
+                    errorUbicacion =
+                        "No se pudieron consultar los centros cercanos. " +
+                                "Verifica la conexión con el servidor."
+
+                } finally {
+                    buscandoCercanos = false
+                }
             }
         }
     }
@@ -146,6 +230,7 @@ fun CiudadanoScreen(
                 selectedTabIndex = selected
             ) {
                 tabs.forEachIndexed { i, title ->
+
                     Tab(
                         selected = selected == i,
                         onClick = { selected = i },
@@ -159,14 +244,19 @@ fun CiudadanoScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
+
                 when (selected) {
 
                     // INICIO
+
                     0 -> inicio(user)
 
                     // MATERIALES
+
                     1 -> {
+
                         when {
+
                             cargandoMateriales -> {
                                 item {
                                     Text("Cargando materiales...")
@@ -190,6 +280,7 @@ fun CiudadanoScreen(
 
                             else -> {
                                 items(materiales) { material ->
+
                                     InfoCard(
                                         title = material.nombre,
                                         lines = listOf(
@@ -204,57 +295,148 @@ fun CiudadanoScreen(
                     }
 
                     // CENTROS DE ACOPIO
+
                     2 -> {
-                        when {
-                            cargandoCentros -> {
-                                item {
-                                    Text("Cargando centros de acopio...")
-                                }
-                            }
 
-                            errorCentros != null -> {
-                                item {
+                        item {
+
+                            Column(
+                                verticalArrangement =
+                                    Arrangement.spacedBy(8.dp)
+                            ) {
+
+                                SectionTitle("Centros de acopio")
+
+                                Button(
+                                    onClick = {
+                                        buscarCentrosCercanos()
+                                    },
+                                    enabled = !buscandoCercanos,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Buscar centros cercanos")
+                                }
+
+                                if (mostrarCercanos) {
+
+                                    OutlinedButton(
+                                        onClick = {
+                                            mostrarCercanos = false
+                                            errorUbicacion = null
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Ver todos los centros")
+                                    }
+                                }
+
+                                if (buscandoCercanos) {
                                     Text(
-                                        text = errorCentros ?: "",
-                                        color = MaterialTheme.colorScheme.error
+                                        "Buscando centros cercanos..."
+                                    )
+                                }
+
+                                if (errorUbicacion != null) {
+                                    Text(
+                                        text = errorUbicacion ?: "",
+                                        color =
+                                            MaterialTheme.colorScheme.error
                                     )
                                 }
                             }
+                        }
 
-                            centros.isEmpty() -> {
+                        if (mostrarCercanos) {
+
+                            if (centrosCercanos.isEmpty()) {
+
                                 item {
                                     Text(
-                                        "No hay centros de acopio disponibles."
+                                        "No se encontraron centros cercanos " +
+                                                "con ubicación registrada."
                                     )
                                 }
-                            }
 
-                            else -> {
-                                items(centros) { centro ->
+                            } else {
+
+                                items(centrosCercanos) { centro ->
+
                                     InfoCard(
                                         title = centro.nombre,
                                         lines = listOf(
                                             "Dirección: ${centro.direccion}",
                                             "Horario: ${centro.horario}",
                                             "Teléfono: ${centro.telefono}"
-                                        )
+                                        ),
+                                        highlight =
+                                            "Distancia aproximada: " +
+                                                    "${centro.distanciaKm} km"
                                     )
+                                }
+                            }
+
+                        } else {
+
+                            when {
+
+                                cargandoCentros -> {
+                                    item {
+                                        Text(
+                                            "Cargando centros de acopio..."
+                                        )
+                                    }
+                                }
+
+                                errorCentros != null -> {
+                                    item {
+                                        Text(
+                                            text = errorCentros ?: "",
+                                            color =
+                                                MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                }
+
+                                centros.isEmpty() -> {
+                                    item {
+                                        Text(
+                                            "No hay centros de acopio disponibles."
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    items(centros) { centro ->
+
+                                        InfoCard(
+                                            title = centro.nombre,
+                                            lines = listOf(
+                                                "Dirección: ${centro.direccion}",
+                                                "Horario: ${centro.horario}",
+                                                "Teléfono: ${centro.telefono}"
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
                     // BENEFICIOS
+
                     else -> {
+
                         item {
                             Text(
                                 "Tienes ${user.puntosDisponibles} puntos disponibles",
-                                style = MaterialTheme.typography.titleMedium,
+                                style =
+                                    MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
                         }
 
                         items(SampleData.beneficios) { beneficio ->
+
                             val alcanza =
                                 user.puntosDisponibles >= beneficio.costo
 
@@ -292,6 +474,7 @@ private fun LazyListScope.inicio(user: User) {
 
     item {
         Column {
+
             Text(
                 "Hola, ${user.fullName.substringBefore(" ")}",
                 style = MaterialTheme.typography.headlineSmall,
@@ -312,6 +495,7 @@ private fun LazyListScope.inicio(user: User) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+
             StatCard(
                 "Puntos disponibles",
                 user.puntosDisponibles.toString(),
@@ -332,6 +516,7 @@ private fun LazyListScope.inicio(user: User) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
+
             StatCard(
                 "Entregas realizadas",
                 user.entregas.toString(),
