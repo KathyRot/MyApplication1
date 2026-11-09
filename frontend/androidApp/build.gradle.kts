@@ -10,44 +10,63 @@ kotlin {
         jvmTarget = JvmTarget.JVM_11
     }
 }
+
 dependencies {
+
+    // Módulo compartido de EcoSuma
     implementation(project(":shared"))
 
+    // Android y Jetpack Compose
     implementation(libs.androidx.activity.compose)
 
+    // Componentes de interfaz de Compose
+    implementation("org.jetbrains.compose.foundation:foundation:1.9.0")
+
+    // Herramientas de Compose
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+
+    // OpenStreetMap (dependencia anterior)
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 }
 
 android {
     namespace = "com.example.myapplication1"
+
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
         applicationId = "com.example.myapplication1"
+
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
+
         versionCode = 1
         versionName = "1.0"
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         compose = true
     }

@@ -5,6 +5,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.os.Build
+import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
 
 data class Ubicacion(
@@ -12,8 +14,10 @@ data class Ubicacion(
     val longitud: Double
 )
 
-fun obtenerUbicacion(context: Context): Ubicacion? {
-
+fun obtenerUbicacionActual(
+    context: Context,
+    onResultado: (Ubicacion?) -> Unit
+) {
     val permisoPreciso = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -25,7 +29,8 @@ fun obtenerUbicacion(context: Context): Ubicacion? {
     ) == PackageManager.PERMISSION_GRANTED
 
     if (!permisoPreciso && !permisoAproximado) {
-        return null
+        onResultado(null)
+        return
     }
 
     val locationManager = context.getSystemService(
@@ -41,26 +46,48 @@ fun obtenerUbicacion(context: Context): Ubicacion? {
         listOf(LocationManager.NETWORK_PROVIDER)
     }
 
-    for (proveedor in proveedores) {
-        try {
-            if (locationManager.isProviderEnabled(proveedor)) {
-
-                val ubicacion =
-                    locationManager.getLastKnownLocation(proveedor)
-
-                if (ubicacion != null) {
-                    return Ubicacion(
-                        latitud = ubicacion.latitude,
-                        longitud = ubicacion.longitude
-                    )
-                }
-            }
-        } catch (e: SecurityException) {
-            return null
-        } catch (e: IllegalArgumentException) {
-            continue
-        }
+    val proveedor = proveedores.firstOrNull {
+        locationManager.isProviderEnabled(it)
     }
 
-    return null
+    if (proveedor == null) {
+        onResultado(null)
+        return
+    }
+
+    try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            locationManager.getCurrentLocation(
+                proveedor,
+                CancellationSignal(),
+                context.mainExecutor
+            ) { location ->
+                onResultado(
+                    location?.let {
+                        Ubicacion(
+                            latitud = it.latitude,
+                            longitud = it.longitude
+                        )
+                    }
+                )
+            }
+        } else {
+            val location = locationManager.getLastKnownLocation(
+                proveedor
+            )
+
+            onResultado(
+                location?.let {
+                    Ubicacion(
+                        latitud = it.latitude,
+                        longitud = it.longitude
+                    )
+                }
+            )
+        }
+    } catch (e: SecurityException) {
+        onResultado(null)
+    } catch (e: IllegalArgumentException) {
+        onResultado(null)
+    }
 }

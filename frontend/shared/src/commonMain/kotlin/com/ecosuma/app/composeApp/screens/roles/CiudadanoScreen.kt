@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.ecosuma.app.MapaBridge
 import com.ecosuma.app.UbicacionBridge
 import com.ecosuma.app.composeApp.components.GoalCard
 import com.ecosuma.app.composeApp.components.InfoCard
@@ -264,11 +265,9 @@ fun CiudadanoScreen(
                 when (selected) {
 
                     // INICIO
-
                     0 -> inicio(user)
 
                     // MATERIALES
-
                     1 -> {
 
                         if (errorMateriales != null) {
@@ -309,7 +308,6 @@ fun CiudadanoScreen(
                     }
 
                     // CENTROS DE ACOPIO
-
                     2 -> {
 
                         item {
@@ -318,6 +316,21 @@ fun CiudadanoScreen(
                                     Arrangement.spacedBy(8.dp)
                             ) {
                                 SectionTitle("Centros de acopio")
+
+                                Text(
+                                    text = "Ubicación de los centros de acopio",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+
+                                // Mapa interactivo de OpenStreetMap
+                                MapaBridge.Mapa()
+
+                                Text(
+                                    text = "Mapa de demostración centrado en Pachuca. " +
+                                            "Los centros reales aparecerán cuando " +
+                                            "se disponga de sus coordenadas.",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
 
                                 Button(
                                     onClick = {
@@ -427,7 +440,6 @@ fun CiudadanoScreen(
                     }
 
                     // BENEFICIOS
-
                     else -> {
 
                         item {

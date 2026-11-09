@@ -4,12 +4,14 @@ package com.example.myapplication1
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import com.ecosuma.app.App
+import com.ecosuma.app.MapaBridge
 import com.ecosuma.app.UbicacionBridge
 
 class MainActivity : ComponentActivity() {
@@ -17,6 +19,7 @@ class MainActivity : ComponentActivity() {
     private var callbackUbicacion:
             ((Double, Double) -> Unit)? = null
 
+    // Solicitar permisos GPS
     private val solicitarPermisosUbicacion =
         registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -31,6 +34,10 @@ class MainActivity : ComponentActivity() {
             if (preciso || aproximado) {
                 consultarUbicacion()
             } else {
+                Log.d(
+                    "EcoSumaMapa",
+                    "El usuario no concedió permisos GPS"
+                )
                 callbackUbicacion = null
             }
         }
@@ -40,9 +47,15 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        // Conectar el GPS con EcoSuma
         UbicacionBridge.solicitarUbicacion = { callback ->
             callbackUbicacion = callback
             pedirPermisosUbicacion()
+        }
+
+        // Conectar OpenStreetMap con EcoSuma
+        MapaBridge.mostrarMapa = {
+            MapaOpenStreetMap()
         }
 
         setContent {
@@ -74,22 +87,42 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    // Obtener ubicación GPS actual
     private fun consultarUbicacion() {
-        val ubicacion = obtenerUbicacion(this)
 
-        if (ubicacion != null) {
-            callbackUbicacion?.invoke(
-                ubicacion.latitud,
-                ubicacion.longitud
-            )
+        obtenerUbicacionActual(this) { ubicacion ->
+
+            if (ubicacion != null) {
+
+                Log.d(
+                    "EcoSumaMapa",
+                    "GPS obtenido: " +
+                            "${ubicacion.latitud}, ${ubicacion.longitud}"
+                )
+
+                callbackUbicacion?.invoke(
+                    ubicacion.latitud,
+                    ubicacion.longitud
+                )
+
+            } else {
+
+                Log.d(
+                    "EcoSumaMapa",
+                    "No se pudo obtener la ubicación GPS actual"
+                )
+            }
+
+            callbackUbicacion = null
         }
-
-        callbackUbicacion = null
     }
 
     override fun onDestroy() {
+
         UbicacionBridge.solicitarUbicacion = null
+        MapaBridge.mostrarMapa = null
         callbackUbicacion = null
+
         super.onDestroy()
     }
 }
