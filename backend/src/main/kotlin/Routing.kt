@@ -55,7 +55,7 @@ fun Application.configureRouting() {
 
         // Comprobar que el servidor esté funcionando
         get("/") {
-            call.respondText("EcoSuma API activa")
+            call.respondText("EcoSuma API activa - Prueba de SSH")
         }
 
         // Autenticación de usuarios
