@@ -24,12 +24,12 @@ import com.ecosuma.app.data.sample.SampleData
 import com.ecosuma.app.domain.model.User
 
 private val modulos = listOf(
-    "Usuarios" to "Consultar, buscar y suspender cuentas",
-    "Materiales" to "Agregar materiales y definir puntos por kg",
-    "Centros de acopio" to "Horarios, ubicación y materiales aceptados",
-    "Beneficios" to "Costo en puntos, existencias y vigencia",
-    "Campañas" to "Publicar campañas y retos",
-    "Entregas" to "Historial de todas las entregas"
+    "Usuarios" to "Consultar usuarios registrados y sus datos",
+    "Materiales" to "Consultar materiales reciclables y EcoPuntos",
+    "Centros de acopio" to "Consultar ubicación, horarios y materiales aceptados",
+    "Beneficios" to "Consultar recompensas, costos y disponibilidad",
+    "Campañas" to "Consultar campañas y retos de reciclaje",
+    "Entregas" to "Consultar el historial de entregas y EcoPuntos"
 )
 
 /** Vista del rol Administrador: dashboard con indicadores, entregas recientes y módulos. */
