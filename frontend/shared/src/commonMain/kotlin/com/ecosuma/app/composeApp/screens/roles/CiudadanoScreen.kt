@@ -59,7 +59,7 @@ private val tabs = listOf(
 private val materialesDemo = listOf(
     MaterialDto(1, "PET", "Plástico", 10),
     MaterialDto(2, "Cartón", "Papel y cartón", 5),
-    MaterialDto(3, "Aluminio", "Metal", 20),
+    MaterialDto(3, "Lata", "Metal", 20),
     MaterialDto(4, "Vidrio", "Vidrio", 8),
     MaterialDto(5, "Papel", "Papel y cartón", 6)
 )
