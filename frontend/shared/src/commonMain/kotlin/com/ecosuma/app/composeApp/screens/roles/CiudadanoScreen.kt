@@ -1,4 +1,3 @@
-
 package com.ecosuma.app.composeApp.screens.roles
 
 import androidx.compose.foundation.layout.Arrangement
@@ -56,10 +55,11 @@ private val tabs = listOf(
 )
 
 // Datos ficticios para mostrar la interfaz sin PostgreSQL.
+
 private val materialesDemo = listOf(
     MaterialDto(1, "PET", "Plástico", 10),
     MaterialDto(2, "Cartón", "Papel y cartón", 5),
-    MaterialDto(3, "Aluminio", "Metal", 20),
+    MaterialDto(3, "Lata", "Metal", 20),
     MaterialDto(4, "Vidrio", "Vidrio", 8),
     MaterialDto(5, "Papel", "Papel y cartón", 6)
 )
@@ -189,7 +189,8 @@ fun CiudadanoScreen(
         }
     }
 
-    // BUSCAR CENTROS CERCANOS POR GPS
+    // BUSCAR CENTROS CERCANOS POR GEOLOCALIZACIÓN
+    // Compatible con Android y WebAssembly.
 
     fun buscarCentrosCercanos() {
         if (buscandoCercanos) return
@@ -197,38 +198,39 @@ fun CiudadanoScreen(
         errorUbicacion = null
         buscandoCercanos = true
 
-        if (UbicacionBridge.solicitarUbicacion == null) {
-            errorUbicacion =
-                "La ubicación no está disponible en este dispositivo."
-            buscandoCercanos = false
-            return
-        }
+        UbicacionBridge.obtenerUbicacion(
+            onUbicacionObtenida = { latitud, longitud ->
 
-        UbicacionBridge.obtenerUbicacion { latitud, longitud ->
-            coroutineScope.launch {
-                try {
-                    centrosCercanos =
-                        AppContainer.centroAcopioRepository
-                            .obtenerCentrosCercanos(
-                                latitud = latitud,
-                                longitud = longitud
-                            )
+                coroutineScope.launch {
+                    try {
+                        centrosCercanos =
+                            AppContainer.centroAcopioRepository
+                                .obtenerCentrosCercanos(
+                                    latitud = latitud,
+                                    longitud = longitud
+                                )
 
-                    mostrarCercanos = true
+                        mostrarCercanos = true
 
-                } catch (e: CancellationException) {
-                    throw e
+                    } catch (e: CancellationException) {
+                        throw e
 
-                } catch (e: Exception) {
-                    errorUbicacion =
-                        "No se pudieron consultar los centros cercanos. " +
-                                "Verifica la conexión con el servidor."
+                    } catch (e: Exception) {
+                        errorUbicacion =
+                            "No se pudieron consultar los centros cercanos. " +
+                                    "Verifica la conexión con el servidor."
 
-                } finally {
-                    buscandoCercanos = false
+                    } finally {
+                        buscandoCercanos = false
+                    }
                 }
+            },
+
+            onError = { mensaje ->
+                errorUbicacion = mensaje
+                buscandoCercanos = false
             }
-        }
+        )
     }
 
     RoleScaffold(
@@ -265,9 +267,11 @@ fun CiudadanoScreen(
                 when (selected) {
 
                     // INICIO
+
                     0 -> inicio(user)
 
                     // MATERIALES
+
                     1 -> {
 
                         if (errorMateriales != null) {
@@ -308,6 +312,7 @@ fun CiudadanoScreen(
                     }
 
                     // CENTROS DE ACOPIO
+
                     2 -> {
 
                         item {
@@ -323,6 +328,7 @@ fun CiudadanoScreen(
                                 )
 
                                 // Mapa interactivo de OpenStreetMap
+
                                 MapaBridge.Mapa()
 
                                 Text(
@@ -440,6 +446,7 @@ fun CiudadanoScreen(
                     }
 
                     // BENEFICIOS
+
                     else -> {
 
                         item {

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Mapa EcoSuma</title>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #e7eee8;
+        }
+
+        #mensaje {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: none;
+        }
+
+        .boton-ubicacion {
+            width: 34px;
+            height: 34px;
+            background: white;
+            border: 2px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="mensaje"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+    let mapa = null;
+    let marcadorUsuario = null;
+    let ultimaUbicacion = null;
+
+    function mostrarMensaje(texto) {
+
+        const mensaje = document.getElementById("mensaje");
+
+        mensaje.textContent = texto;
+        mensaje.style.display = "block";
+    }
+
+    function ocultarMensaje() {
+
+        document.getElementById("mensaje").style.display = "none";
+    }
+
+    function mostrarUbicacion(latitud, longitud) {
+
+        ultimaUbicacion = [latitud, longitud];
+
+        if (!mapa) return;
+
+        mapa.setView(ultimaUbicacion, 16);
+
+        if (marcadorUsuario) {
+
+            marcadorUsuario.setLatLng(ultimaUbicacion);
+
+        } else {
+
+            marcadorUsuario = L.marker(ultimaUbicacion)
+                .addTo(mapa)
+                .bindPopup("Estás aquí");
+        }
+
+        marcadorUsuario.openPopup();
+
+        ocultarMensaje();
+    }
+
+    function obtenerUbicacion() {
+
+        if (!navigator.geolocation) {
+
+            mostrarMensaje(
+                "La geolocalización no está disponible."
+            );
+
+            return;
+        }
+
+        mostrarMensaje("Obteniendo tu ubicación...");
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(posicion) {
+
+                mostrarUbicacion(
+                    posicion.coords.latitude,
+                    posicion.coords.longitude
+                );
+            },
+
+            function(error) {
+
+                switch (error.code) {
+
+                    case 1:
+
+                        mostrarMensaje(
+                            "Permiso de ubicación denegado."
+                        );
+
+                        break;
+
+                    case 2:
+
+                        mostrarMensaje(
+                            "No se pudo obtener tu ubicación."
+                        );
+
+                        break;
+
+                    case 3:
+
+                        mostrarMensaje(
+                            "Tiempo de espera agotado."
+                        );
+
+                        break;
+
+                    default:
+
+                        mostrarMensaje(
+                            "Error al obtener la ubicación."
+                        );
+                }
+            },
+
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
+        );
+    }
+
+    try {
+
+        if (typeof L === "undefined") {
+
+            throw new Error("No se pudo cargar Leaflet.");
+        }
+
+        mapa = L.map("map").setView(
+            [20.1011, -98.7591],
+            13
+        );
+
+        L.tileLayer(
+            "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                maxZoom: 19,
+                attribution:
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }
+        ).addTo(mapa);
+
+        const botonUbicacion = L.control({
+            position: "topleft"
+        });
+
+        botonUbicacion.onAdd = function() {
+
+            const boton = L.DomUtil.create(
+                "button",
+                "boton-ubicacion"
+            );
+
+            boton.innerHTML = "📍";
+
+            boton.title = "Mi ubicación";
+
+            boton.setAttribute(
+                "aria-label",
+                "Mi ubicación"
+            );
+
+            L.DomEvent.disableClickPropagation(boton);
+
+            L.DomEvent.disableScrollPropagation(boton);
+
+            L.DomEvent.on(
+                boton,
+                "click",
+                function(evento) {
+
+                    L.DomEvent.stop(evento);
+
+                    obtenerUbicacion();
+                }
+            );
+
+            return boton;
+        };
+
+        botonUbicacion.addTo(mapa);
+
+        mapa.whenReady(function() {
+
+            setTimeout(function() {
+
+                mapa.invalidateSize();
+
+            }, 500);
+        });
+
+        window.addEventListener("resize", function() {
+
+            mapa.invalidateSize();
+        });
+
+    } catch (error) {
+
+        mostrarMensaje(
+            "Error al cargar el mapa: " + error.message
+        );
+    }
+
+</script>
+
+</body>
+
+</html>
