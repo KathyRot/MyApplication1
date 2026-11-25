@@ -1,3 +1,4 @@
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -20,6 +21,11 @@ kotlin {
     }
 
     jvm()
+
+    // Nuevo destino WebAssembly
+    wasmJs {
+        browser()
+    }
 
     android {
         namespace = "com.example.myapplication1.shared"
@@ -50,7 +56,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
 
-            // Motor HTTP de Ktor para Android (no usa OkHttp)
+            // Motor HTTP para Android
             implementation(libs.ktor.client.android)
         }
 
@@ -71,18 +77,23 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.kotlinx.serialization.json)
 
-            // Navegación entre pantallas (login -> vista de cada rol)
+            // Navegación entre pantallas
             implementation(libs.navigation.compose)
         }
 
         jvmMain.dependencies {
-            // Motor HTTP de Ktor para la app de escritorio
+            // Motor HTTP para escritorio
             implementation(libs.ktor.client.cio)
         }
 
         iosMain.dependencies {
-            // Motor HTTP de Ktor para iOS
+            // Motor HTTP para iOS
             implementation(libs.ktor.client.darwin)
+        }
+
+        wasmJsMain.dependencies {
+            // Motor HTTP para navegador
+            implementation(libs.ktor.client.js)
         }
 
         commonTest.dependencies {
