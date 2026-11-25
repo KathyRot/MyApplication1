@@ -7,7 +7,7 @@ ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
 
 RUN apt-get update && \
-    apt-get install -y curl unzip git ca-certificates && \
+    apt-get install -y curl unzip git ca-certificates libatomic1 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
